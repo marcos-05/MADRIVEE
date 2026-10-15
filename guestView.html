@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MaDrive · Mapa de Cámaras de Tráfico</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --blue-dark: #0d1f3c;
+            --blue-mid: #1a3a5c;
+            --blue-brand: #1565c0;
+            --blue-light: #1e5799;
+            --blue-accent: #2196f3;
+            --green-cam: #22cc44;
+            --white: #ffffff;
+            --glass-bg: rgba(13, 31, 60, 0.72);
+            --glass-border: rgba(33, 150, 243, 0.30);
+            --input-bg: rgba(255, 255, 255, 0.07);
+            --input-border: rgba(33, 150, 243, 0.40);
+            --text-muted: rgba(200, 225, 255, 0.65);
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: #081122; /* Fondo oscuro muy sutil para que empate con bordes y mapa si falla carga */
+            color: var(--white);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue-mid) 50%, var(--blue-dark) 100%);
+            padding: 13px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+
+        header h1::before {
+            content: '🚦';
+            display: inline-block;
+            width: 36px;
+            height: 36px;
+            line-height: 36px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--blue-brand), var(--blue-accent));
+            border-radius: 8px;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(21, 101, 192, 0.4);
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            color: #ddeeff;
+        }
+
+        .dot {
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            flex-shrink: 0;
+        }
+
+        .dot-green {
+            background: #22cc44;
+            box-shadow: 0 0 7px #22cc44;
+        }
+
+        .line-blue {
+            width: 22px;
+            height: 4px;
+            background: #1565c0;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        header>span {
+            font-size: 12px;
+            color: rgba(200, 225, 255, 0.85);
+            margin-left: auto;
+        }
+
+        #stats-bar {
+            background: var(--blue-dark);
+            padding: 7px 24px;
+            display: flex;
+            gap: 28px;
+            font-size: 12px;
+            border-bottom: 1px solid var(--glass-border);
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            color: var(--text-muted);
+        }
+
+        .stat strong {
+            color: var(--blue-accent);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        #loading-bar {
+            background: #fff3cd;
+            border-bottom: 2px solid #ffc107;
+            padding: 6px 24px;
+            font-size: 12px;
+            color: #856404;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #ffc107;
+            border-top-color: #856404;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #map {
+            flex: 1;
+            width: 100%;
+        }
+
+        /* Popups */
+        .leaflet-popup-content-wrapper {
+            background: #fff;
+            color: #222;
+            border: 2px solid #1565c0;
+            border-radius: 10px;
+            box-shadow: 0 6px 24px rgba(0, 60, 140, 0.18);
+        }
+
+        .leaflet-popup-tip {
+            background: #fff;
+        }
+
+        .custom-popup h3 {
+            color: #1565c0;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .custom-popup p {
+            font-size: 12px;
+            margin: 3px 0;
+            color: #444;
+        }
+
+        .cam-btn {
+            display: block;
+            margin: 8px auto 0 auto;
+            background: #1565c0;
+            color: #ffffff !important;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 11px;
+            text-decoration: none;
+            text-align: center;
+            width: fit-content;
+        }
+
+        .cam-btn:hover {
+            background: #0d47a1;
+        }
+
+        /* Legend panel flotante del mapa */
+        #legend-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 12px;
+            backdrop-filter: blur(12px) saturate(1.2);
+            -webkit-backdrop-filter: blur(12px);
+            min-width: 180px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            color: var(--text-muted);
+        }
+
+        #legend-panel .title {
+            color: var(--white);
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+
+        #legend-panel .road-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+            color: rgba(220, 235, 255, 0.9);
+        }
+
+        .road-line {
+            width: 22px;
+            height: 3px;
+            background: var(--blue-brand);
+            border-radius: 2px;
+        }
+
+        .road-count {
+            color: var(--blue-accent);
+            margin-left: auto;
+            font-weight: 600;
+        }
+
+        .legend-footer {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(150, 185, 230, 0.5);
+            font-size: 11px;
+        }
+
+        /* ── Panel de Predicción ── */
+        #pred-panel {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 400px;
+            height: 100vh;
+            background: var(--glass-bg);
+            border-left: 1px solid var(--glass-border);
+            backdrop-filter: blur(24px) saturate(1.4);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        #pred-panel.open {
+            right: 0;
+        }
+
+        #pred-panel-header {
+            background: rgba(13, 31, 60, 0.6);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #pred-panel-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--white);
+            flex: 1;
+        }
+
+        #pred-close {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #pred-close:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--white);
+        }
+
+        #pred-body {
+            padding: 24px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        #pred-info {
+            background: rgba(21, 101, 192, 0.15);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            font-size: 13px;
+            color: rgba(220, 235, 255, 0.9);
+            line-height: 1.5;
+        }
+
+        #pred-info b {
+            color: var(--white);
+        }
+
+        .pred-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(200, 225, 255, 0.80);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin: 16px 0 8px;
+        }
+
+        .pred-input {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--input-bg);
+            border: 1.5px solid var(--input-border);
+            border-radius: 10px;
+            color: var(--white);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+        }
+
+        /* Hack to make calendar icon white on dark UI inputs */
+        .pred-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.7;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .pred-input::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
+        .pred-input:focus {
+            border-color: var(--blue-accent);
+            background: rgba(33, 150, 243, 0.10);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.18);
+        }
+
+        #pred-btn {
+            width: 100%;
+            margin-top: 24px;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--blue-brand) 0%, var(--blue-accent) 100%);
+            color: var(--white);
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.15s, box-shadow 0.25s;
+            box-shadow: 0 6px 22px rgba(21, 101, 192, 0.50);
+        }
+
+        #pred-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 32px rgba(21, 101, 192, 0.65);
+        }
+
+        #pred-btn:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.4);
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #pred-result {
+            margin-top: 20px;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        #pred-result .nivel-num {
+            font-size: 56px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        #pred-result .nivel-txt {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+
+        #pred-result .nivel-sub {
+            font-size: 11px;
+            margin-top: 8px;
+            opacity: 0.75;
+        }
+
+        #pred-api-warn {
+            display: none;
+            margin-top: 12px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #856404;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>MaDrive</h1>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="dot dot-green"></div>
+                <span>Cámara analizada</span>
+            </div>
+            <div class="legend-item">
+                <div class="line-blue" style="width:12px; background:#1565c0;"></div>
+                <div class="line-blue" style="width:12px; background:#f57c00; margin-left:-3px;"></div>
+                <div class="line-blue" style="width:12px; background:#2e7d32; margin-left:-3px;"></div>
+                <span style="margin-left:4px;">Carreteras (A, M, N)</span>
+            </div>
+        </div>
+        <span>Sistema de Análisis de Tráfico · Madrid</span>
+        <div id="header-right" style="display: flex; align-items: center; gap: 16px; margin-left: auto;">
+            <span class="header-time" id="clock">—</span>
+            <button style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;" onclick="window.location.href='/'" onmouseover="this.style.background='rgba(255, 255, 255, 0.15)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'">🔙 Volver</button>
+        </div>
+    </header>
+
+    <div id="stats-bar">
+        <div class="stat">📷 Cámaras: <strong id="total-cams">0</strong></div>
+        <div class="stat">🛣️ Carreteras: <strong id="total-roads">0</strong></div>
+        <div class="stat">📍 Zona: <strong>Comunidad de Madrid</strong></div>
+        <div class="stat" id="road-status" style="margin-left:auto; color:#888;"></div>
+    </div>
+
+    <div id="loading-bar" id="loading-bar">
+        <div class="spinner"></div>
+        Cargando geometría real de carreteras desde OpenStreetMap… (puede tardar unos segundos)
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Panel de Predicción -->
+    <div id="pred-panel">
+        <div id="pred-panel-header">
+            <span style="font-size:20px;">🔮</span>
+            <h2>Predicción de Tráfico</h2>
+            <button id="pred-close" title="Cerrar panel">✕</button>
+        </div>
+        <div id="pred-body">
+            <div id="pred-info">
+                📷 Selecciona una cámara en el mapa para predecir
+            </div>
+
+            <div id="pred-traffic" style="
+                margin-top:12px;
+                padding:12px;
+                border-radius:10px;
+                background:#f5f7fa;
+                text-align:center;
+                font-weight:700;
+                font-size:18px;
+            "></div>
+
+            <div class="pred-label">📅 Fecha</div>
+            <input type="date" class="pred-input" id="pred-fecha" />
+
+            <div class="pred-label">🕐 Hora</div>
+            <input type="time" class="pred-input" id="pred-hora" value="08:00" />
+
+            <button id="pred-btn" onclick="lanzarPrediccion()" disabled>Predecir tráfico</button>
+
+            <div id="pred-api-warn">
+                ⚠️ <strong>API no disponible.</strong> Asegúrate de que <code>api.py</code> está corriendo:<br />
+                <code style="font-size:11px;">python -m uvicorn api:app --reload --port 8000</code>
+            </div>
+
+            <div id="pred-result">
+                <div class="nivel-num" id="res-num">—</div>
+                <div class="nivel-txt" id="res-txt">—</div>
+                <div class="nivel-sub" id="res-sub"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+
+        // ─────────────────────────────────────────────
+        // DATOS DE CÁMARAS (coordenadas reales DGT)
+        // ─────────────────────────────────────────────
+        const CAMARAS_DATA = [];
+        let CAMARAS = [];
+
+
+        // ─────────────────────────────────────────────
+        // MAPA — fondo blanco (OSM estándar claro)
+        // ─────────────────────────────────────────────
+        const map = L.map('map', { center: [40.46, -3.70], zoom: 11 });
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/">CARTO</a> · Datos DGT',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        // ─────────────────────────────────────────────
+        // ICONO VERDE PARA CÁMARAS
+        // ─────────────────────────────────────────────
+        function makeIcon(size = 14) {
+            return L.divIcon({
+                className: '',
+                html: `<div style="
+      width:${size}px; height:${size}px;
+      background:#22cc44;
+      border:2.5px solid #fff;
+      border-radius:50%;
+      box-shadow:0 0 8px #22cc4488, 0 2px 5px rgba(0,0,0,0.25);
+      cursor:pointer;
+    "></div>`,
+                iconSize: [size, size],
+                iconAnchor: [size / 2, size / 2]
+            });
+        }
+
+        // ─────────────────────────────────────────────
+        // MARCADORES
+        // ─────────────────────────────────────────────
+        const roadsSet = new Set();
+        const roadGroups = {};
+        const traficoCache = {};
+
+        fetch('/api/zonas')
+            .then(res => res.json())
+            .then(data => {
+                if(data.success && data.camaras) {
+                    CAMARAS = data.camaras;
+
+                    CAMARAS.forEach(cam => {
+                        roadsSet.add(cam.road);
+                        if (!roadGroups[cam.road]) roadGroups[cam.road] = [];
+                        roadGroups[cam.road].push([cam.lat, cam.lon]);
+
+                        const imgUrl = `https://infocar.dgt.es/etraffic/data/camaras/${cam.id}.jpg`;
+
+                        const marker = L.marker([cam.lat, cam.lon], { icon: makeIcon() })
+                            .addTo(map)
+                            .bindPopup(`
+      <div class="custom-popup">
+        <h3>📷 Cámara ${cam.id}</h3>
+        <p>🛣️ <strong>Carretera:</strong> ${cam.road}</p>
+        <p>📍 <strong>PK:</strong> ${cam.pk} km</p>
+        <p>🌐 <strong>Coords:</strong> ${cam.lat.toFixed(5)}, ${cam.lon.toFixed(5)}</p>
+        <br/>
+        <img src="${imgUrl}" width="220"
+             style="border-radius:6px;border:1.5px solid #1565c0;display:block;margin-bottom:6px;"
+             onerror="this.style.display='none'" />
+        <a href="${imgUrl}" target="_blank" class="cam-btn">🔗 Ver imagen en directo</a>
+        <br/>
+      </div>
+    `, { maxWidth: 265 });
+                        marker.on("popupopen", () => {
+                            const imgUrl = `https://infocar.dgt.es/etraffic/data/camaras/${cam.id}.jpg`;
+
+                            fetch("/analizar_imagen", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({ url: imgUrl })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                console.log("DATA:", data);
+
+                                if (data.error) {
+                                    console.error("Error backend:", data.error);
+                                    return;
+                                }
+
+                                // 🔥 GUARDAR SIEMPRE
+                                traficoCache[cam.id] = data;
+
+                                // 🔥 ACTUALIZAR PANEL SI ESTÁ ABIERTO
+                                if (camaraSeleccionada && camaraSeleccionada.id === cam.id) {
+                                    abrirPanel(cam);
+                                }
+                            })
+                            .catch(err => {
+                                if (typeof el !== 'undefined' && el) el.innerText = "⚠️ Error conexión";
+                            });
+                        });
+                    });
+
+                    document.getElementById('total-cams').textContent = CAMARAS.length;
+                    document.getElementById('total-roads').textContent = roadsSet.size;
+
+                    map.fitBounds(CAMARAS.map(c => [c.lat, c.lon]), { padding: [40, 40] });
+                    const legendPanelDiv = document.getElementById('legend-panel');
+                    if (legendPanelDiv) {
+                        try {
+                            renderLegend(legendPanelDiv, 'Cámaras BD cargadas');
+                        } catch(e) {}
+                    }
+                }
+            })
+            .catch(err => console.error("Error cargando cámaras:", err));
+
+        // ─────────────────────────────────────────────
+        // COLORES POR TIPO DE CARRETERA
+        // ─────────────────────────────────────────────
+        function getRoadColor(roadName) {
+            if (roadName.startsWith('A')) return '#1565c0'; // Azul para Autovías (A)
+            if (roadName.startsWith('M')) return '#f57c00'; // Naranja para Madrid (M)
+            if (roadName.startsWith('N')) return '#2e7d32'; // Verde para Nacionales (N)
+            return '#1565c0'; // Default
+        }
+
+        // ─────────────────────────────────────────────
+        // LEYENDA FLOTANTE
+        // ─────────────────────────────────────────────
+        const legendCtrl = L.control({ position: 'bottomright' });
+        legendCtrl.onAdd = function () {
+            const div = L.DomUtil.create('div', '');
+            div.id = 'legend-panel';
+            renderLegend(div, 'Cargando…');
+            return div;
+        };
+        legendCtrl.addTo(map);
+
+        function renderLegend(div, status) {
+            const roads = [...roadsSet].sort();
+            div.innerHTML = `
+    <div class="title">🛣️ Carreteras analizadas</div>
+    ${roads.map(r => `
+      <div class="road-row">
+        <div class="road-line" style="background: ${getRoadColor(r)}"></div>
+        <span>${r}</span>
+        <span class="road-count">${roadGroups[r].length} 📷</span>
+      </div>
+    `).join('')}
+    <div class="legend-footer">
+      ${CAMARAS.length} cámaras · ${roads.length} carreteras<br/>
+      <span style="color:#aaa;">${status}</span>
+    </div>
+  `;
+        }
+
+        // ─────────────────────────────────────────────
+        // CARRETERAS REALES — Overpass API
+        // Busca los tramos exactos de cada carretera
+        // dentro del bbox de Madrid
+        // ─────────────────────────────────────────────
+        const BBOX = '39.90,-4.25,40.85,-3.15'; // bbox amplio para cubrir M-614, N-6, A-3
+
+        // Carreteras presentes en el dataset
+        const ROAD_REFS = ['A-1', 'A-2', 'A-3', 'A-4', 'A-5', 'A-6', 'A-42', 'M-40', 'M-50', 'M-614', 'N-6'];
+
+        const overpassQuery = `
+            [out:json][timeout:25];
+            (
+            way["highway"]["ref"~"^(A-1|A-2|A-3|A-4|A-5|A-6|A-42|M-40|M-50|M-614|N-6)$"](${BBOX});
+            );
+            out geom qt;
+        `;
+
+        const overpassUrl =
+            'https://overpass-api.de/api/interpreter?data=' +
+            encodeURIComponent(overpassQuery.trim());
+
+        // Capa de carreteras reales (se añade DEBAJO de los marcadores)
+        const roadLayer = L.layerGroup().addTo(map);
+
+        fetch(overpassUrl)
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(data => {
+                // Agrupar segmentos por ref
+                const waysByRef = {};
+                data.elements.forEach(el => {
+                    if (el.type !== 'way' || !el.geometry) return;
+                    const ref = el.tags && el.tags.ref;
+                    if (!ref || !ROAD_REFS.includes(ref)) return;
+                    if (!waysByRef[ref]) waysByRef[ref] = [];
+                    waysByRef[ref].push(el.geometry.map(p => [p.lat, p.lon]));
+                });
+
+                // Dibujar cada carretera en su color respectivo
+                Object.entries(waysByRef).forEach(([ref, segments]) => {
+                    const rColor = getRoadColor(ref);
+                    segments.forEach(coords => {
+                        L.polyline(coords, {
+                            color: rColor,
+                            weight: 5,
+                            opacity: 0.80,
+                            smoothFactor: 1.5,
+                            lineJoin: 'round',
+                            lineCap: 'round'
+                        })
+                            .addTo(roadLayer)
+                            .bindTooltip(`🛣️ ${ref}`, { sticky: true, className: '' });
+                    });
+                });
+
+                // Ocultar barra de carga
+                document.getElementById('loading-bar').style.display = 'none';
+                const total = Object.values(waysByRef).reduce((s, a) => s + a.length, 0);
+                document.getElementById('road-status').textContent =
+                    `✅ ${total} segmentos cargados`;
+                renderLegend(
+                    document.getElementById('legend-panel'),
+                    `${total} segmentos OSM cargados`
+                );
+            })
+            .catch(err => {
+                // Si falla Overpass, trazar líneas aproximadas conectando cámaras
+                console.warn('Overpass falló, usando líneas aproximadas:', err);
+                document.getElementById('loading-bar').innerHTML =
+                    '⚠️ No se pudo cargar OSM. Mostrando tramos aproximados entre cámaras.';
+                document.getElementById('loading-bar').style.background = '#fff3cd';
+
+                Object.entries(roadGroups).forEach(([road, points]) => {
+                    if (points.length < 2) return;
+                    points.sort((a, b) => a[1] - b[1]);
+                    L.polyline(points, {
+                        color: getRoadColor(road), weight: 5, opacity: 0.75, smoothFactor: 2
+                    }).addTo(roadLayer)
+                        .bindTooltip(`🛣️ ${road} (aprox.)`, { sticky: true });
+                });
+                setTimeout(() => {
+                    document.getElementById('loading-bar').style.display = 'none';
+                }, 4000);
+                renderLegend(
+                    document.getElementById('legend-panel'),
+                    'Tramos aproximados (OSM no disponible)'
+                );
+            });
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MaDrive · Panel de Administración</title>
+  <meta name="description" content="Panel de administración del sistema de análisis de tráfico MaDrive. Gestión de predicciones, dataset y cámaras." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── RESET & TOKENS ─────────────────────────────── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+      --bg-base:        #07101f;
+      --bg-panel:       #0d1a2e;
+      --bg-card:        rgba(13,31,60,0.75);
+      --blue-dark:      #0d1f3c;
+      --blue-mid:       #1a3a5c;
+      --blue-brand:     #1565c0;
+      --blue-accent:    #2196f3;
+      --blue-glow:      rgba(33,150,243,0.18);
+      --green:          #22cc44;
+      --yellow:         #ffc107;
+      --orange:         #f57c00;
+      --red:            #d32f2f;
+      --white:          #ffffff;
+      --text-muted:     rgba(200,225,255,0.6);
+      --text-soft:      rgba(220,235,255,0.9);
+      --glass-border:   rgba(33,150,243,0.22);
+      --radius:         14px;
+      --sidebar-w:      240px;
+      --header-h:       62px;
+      --transition:     0.22s ease;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg-base);
+      color: var(--white);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── HEADER ──────────────────────────────────────── */
+    #app-header {
+      height: var(--header-h);
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--blue-dark) 0%, #112244 100%);
+      border-bottom: 1px solid var(--glass-border);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.55);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 18px;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--blue-brand), var(--blue-accent));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 19px;
+      box-shadow: 0 4px 14px rgba(21,101,192,0.45);
+      flex-shrink: 0;
+    }
+    .logo-text {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: var(--white);
+    }
+    .admin-badge {
+      background: linear-gradient(135deg, #b71c1c, #d32f2f);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    #header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .header-time {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    #btn-logout {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.75);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all var(--transition);
+      letter-spacing: 0.5px;
+    }
+    #btn-logout:hover {
+      background: rgba(211,47,47,0.2);
+      border-color: rgba(211,47,47,0.5);
+      color: #ff6b6b;
+    }
+
+    /* ─── MAIN LAYOUT ─────────────────────────────────── */
+    #app-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ─── SIDEBAR ─────────────────────────────────────── */
+    #sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 12px;
+      gap: 4px;
+      overflow-y: auto;
+    }
+
+    .sidebar-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 12px 12px 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all var(--transition);
+      color: var(--text-soft);
+      font-size: 13.5px;
+      font-weight: 500;
+      border: 1px solid transparent;
+      user-select: none;
+    }
+    .nav-item .nav-icon {
+      font-size: 17px;
+      width: 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .nav-item:hover {
+      background: rgba(33,150,243,0.1);
+      color: var(--white);
+    }
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(21,101,192,0.3), rgba(33,150,243,0.15));
+      border-color: rgba(33,150,243,0.3);
+      color: var(--white);
+      font-weight: 600;
+      box-shadow: 0 2px 12px rgba(33,150,243,0.15);
+    }
+    .nav-item.active .nav-icon { filter: drop-shadow(0 0 6px var(--blue-accent)); }
+
+    .sidebar-divider {
+      height: 1px;
+      background: var(--glass-border);
+      margin: 8px 0;
+    }
+
+    /* ─── CONTENT AREA ────────────────────────────────── */
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ─── PAGE HEADER ─────────────────────────────────── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .page-title { font-size: 24px; font-weight: 800; letter-spacing: 0.3px; }
+    .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ─── KPI CARDS ───────────────────────────────────── */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      backdrop-filter: blur(14px);
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+    .kpi-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .kpi-value { font-size: 30px; font-weight: 800; line-height: 1; }
+    .kpi-sub  { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+
+    /* ─── PANEL / CARD ────────────────────────────────── */
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+    .panel-head {
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-body { padding: 22px; }
+
+    /* ─── TABLE ───────────────────────────────────────── */
+    .data-table-wrap { overflow-x: auto; }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .data-table th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--glass-border);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid rgba(33,150,243,0.07);
+      color: var(--text-soft);
+      white-space: nowrap;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tbody tr { transition: background var(--transition); }
+    .data-table tbody tr:hover { background: rgba(33,150,243,0.06); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 22px;
+      border-top: 1px solid var(--glass-border);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ─── BUTTONS ─────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition);
+      letter-spacing: 0.3px;
+      font-family: inherit;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--blue-brand), var(--blue-accent));
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(21,101,192,0.4);
+    }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(21,101,192,0.55); }
+    .btn-success {
+      background: linear-gradient(135deg, #1b5e20, #388e3c);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(27,94,32,0.35);
+    }
+    .btn-success:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(27,94,32,0.5); }
+    .btn-danger {
+      background: linear-gradient(135deg, #7f0000, #c62828);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(127,0,0,0.35);
+    }
+    .btn-danger:hover:not(:disabled) { transform: translateY(-2px); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      color: var(--text-soft);
+    }
+    .btn-outline:hover { background: rgba(33,150,243,0.1); color: #fff; border-color: var(--blue-accent); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+    .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 8px; }
+
+    /* ─── ACTION CARDS (Modelo & Dataset) ─────────────── */
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .action-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 26px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .action-card:hover { border-color: rgba(33,150,243,0.45); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+    .action-card-icon { font-size: 32px; }
+    .action-card-title { font-size: 16px; font-weight: 700; }
+    .action-card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    /* ─── LOG STATUS BOX ──────────────────────────────── */
+    .log-box {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+      color: #a8d8a8;
+      min-height: 80px;
+      max-height: 160px;
+      overflow-y: auto;
+      line-height: 1.7;
+      display: none;
+    }
+    .log-box.visible { display: block; }
+    .log-line { margin-bottom: 2px; }
+    .log-line.err { color: #ff8a80; }
+    .log-line.warn { color: #ffd740; }
+
+    /* ─── PROGRESS BAR ────────────────────────────────── */
+    .progress-bar-wrap {
+      height: 6px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 3px;
+      overflow: hidden;
+      display: none;
+    }
+    .progress-bar-wrap.visible { display: block; }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue-brand), var(--blue-accent));
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.5s ease;
+      animation: pulse-bar 1.5s ease infinite;
+    }
+    @keyframes pulse-bar {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.6; }
+    }
+
+    /* ─── CAMERA MANAGEMENT ───────────────────────────── */
+    .cam-search-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 160px;
+    }
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .field-input {
+      padding: 11px 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1.5px solid var(--glass-border);
+      border-radius: 10px;
+      color: var(--white);
+      font-size: 13.5px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+    .field-input:focus {
+      border-color: var(--blue-accent);
+      background: rgba(33,150,243,0.08);
+      box-shadow: 0 0 0 3px rgba(33,150,243,0.15);
+    }
+    .field-input::placeholder { color: rgba(200,225,255,0.3); }
+
+    /* Listado de cámaras disponibles */
+    .cam-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      max-height: 340px;
+      overflow-y: auto;
+    }
+    .cam-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .cam-item:hover { border-color: rgba(33,150,243,0.4); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .cam-item.active { border-color: var(--green); background: rgba(34,204,68,0.06); }
+    .cam-item-id { font-size: 15px; font-weight: 700; }
+    .cam-item-road { font-size: 12px; color: var(--text-muted); }
+    .cam-item-status { font-size: 11px; font-weight: 600; }
+    .cam-item-status.on  { color: var(--green); }
+    .cam-item-status.off { color: var(--text-muted); }
+
+    /* ─── TOAST ───────────────────────────────────────── */
+    #toast-container {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 9999;
+    }
+    .toast {
+      background: var(--bg-panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 13px 18px;
+      font-size: 13px;
+      color: var(--text-soft);
+      box-shadow: 0 6px 28px rgba(0,0,0,0.55);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease;
+      max-width: 340px;
+    }
+    .toast.success { border-left: 4px solid var(--green); }
+    .toast.error   { border-left: 4px solid var(--red); }
+    .toast.warn    { border-left: 4px solid var(--yellow); }
+    @keyframes slideIn {
+      from { opacity:0; transform: translateX(30px); }
+      to   { opacity:1; transform: translateX(0); }
+    }
+
+    /* ─── SPINNER INLINE ──────────────────────────────── */
+    .spin {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: rot 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes rot { to { transform: rotate(360deg); } }
+
+    /* ─── EMPTY STATE ─────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state .es-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.6; }
+    .empty-state .es-text { font-size: 14px; }
+
+    /* ─── VIEWS ───────────────────────────────────────── */
+    .view { display: none; flex-direction: column; gap: 24px; }
+    .view.active { display: flex; }
+
+    /* ─── SCROLLBAR ───────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(33,150,243,0.3); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header id="app-header">
+  <a class="logo" href="/mapa" title="Ir al mapa">
+    <div class="logo-icon">🚦</div>
+    <span class="logo-text">MaDrive</span>
+  </a>
+  <span class="admin-badge">Admin</span>
+
+  <div id="header-right">
+    <span class="header-time" id="clock">—</span>
+    <button class="btn btn-outline btn-sm" id="btn-logout" onclick="logout()">⏻ Cerrar sesión</button>
+  </div>
+</header>
+
+<!-- ═══════════════════════ BODY ═════════════════════════ -->
+<div id="app-body">
+
+  <!-- ── SIDEBAR ── -->
+  <nav id="sidebar">
+    <p class="sidebar-section-label">Dashboard</p>
+
+    <div class="nav-item active" onclick="showView('logs')" id="nav-logs">
+      <span class="nav-icon">📋</span> Logs de predicciones
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <p class="sidebar-section-label">Gestión</p>
+
+    <div class="nav-item" onclick="showView('modelo')" id="nav-modelo">
+      <span class="nav-icon">🤖</span> Modelo & Dataset
+    </div>
+
+    <div class="nav-item" onclick="showView('camaras')" id="nav-camaras">
+      <span class="nav-icon">📷</span> Cámaras
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <p class="sidebar-section-label">Accesos</p>
+
+    <div class="nav-item" onclick="window.location.href='/mapa'">
+      <span class="nav-icon">🗺️</span> Ver mapa público
+    </div>
+  </nav>
+
+  <!-- ── CONTENT ── -->
+  <main id="content">
+
+    <!-- ══════════════ VIEW: LOGS ══════════════ -->
+    <section class="view active" id="view-logs">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">📋 Logs de Predicciones</div>
+          <div class="page-subtitle">Historial completo de predicciones de tráfico realizadas por el sistema.</div>
+        </div>
+        <button class="btn btn-outline btn-sm" id="btn-refresh-logs" onclick="loadLogs()">↻ Actualizar</button>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-row" id="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Total predicciones</div>
+          <div class="kpi-value" id="kpi-total">—</div>
+          <div class="kpi-sub">registros en BD</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Tráfico fluido</div>
+          <div class="kpi-value" style="color:var(--green)" id="kpi-fluido">—</div>
+          <div class="kpi-sub">nivel 0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Tráfico denso</div>
+          <div class="kpi-value" style="color:var(--yellow)" id="kpi-denso">—</div>
+          <div class="kpi-sub">nivel 1</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Atascos / Congestión</div>
+          <div class="kpi-value" style="color:var(--red)" id="kpi-atasco">—</div>
+          <div class="kpi-sub">nivel 2 y 3</div>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">🗂️ Historial</span>
+          <span id="logs-count-label" style="font-size:12px;color:var(--text-muted)">—</span>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table" id="logs-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Cámara / Zona</th>
+                <th>Carretera</th>
+                <th>PK</th>
+                <th>Fecha predicha</th>
+                <th>Resultado</th>
+                <th>Usuario</th>
+                <th>Calculado</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody">
+              <tr><td colspan="8"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-text">Cargando datos…</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <button class="btn btn-outline btn-sm" id="btn-prev" onclick="changePage(-1)" disabled>← Anterior</button>
+          <span id="page-info">Pág. 1</span>
+          <button class="btn btn-outline btn-sm" id="btn-next" onclick="changePage(+1)" disabled>Siguiente →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ VIEW: MODELO & DATASET ══════════════ -->
+    <section class="view" id="view-modelo">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">🤖 Modelo & Dataset</div>
+          <div class="page-subtitle">Descarga nuevas imágenes de cámaras y reentrena el modelo XGBoost.</div>
+        </div>
+      </div>
+
+      <div class="action-grid">
+
+        <!-- Card: Descargar imágenes -->
+        <div class="action-card">
+          <div class="action-card-icon">📥</div>
+          <div class="action-card-title">Descargar nuevas imágenes</div>
+          <div class="action-card-desc">
+            Ejecuta el script de descarga de fotogramas desde las cámaras DGT activas y actualiza el dataset local con las imágenes más recientes.
+          </div>
+          <div class="progress-bar-wrap" id="dl-progress-wrap">
+            <div class="progress-bar-fill" id="dl-progress-bar"></div>
+          </div>
+          <div class="log-box" id="dl-log"></div>
+          <button class="btn btn-primary" id="btn-descargar" onclick="descargarDataset()">
+            <span id="dl-icon">📥</span> Descargar imágenes
+          </button>
+        </div>
+
+        <!-- Card: Reentrenar modelo -->
+        <div class="action-card">
+          <div class="action-card-icon">⚙️</div>
+          <div class="action-card-title">Reentrenar modelo</div>
+          <div class="action-card-desc">
+            Lanza el reentrenamiento del modelo XGBoost con el dataset normalizado actual. El modelo actualizado se guarda como <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:11px">xgboost_model.json</code>.
+          </div>
+          <div class="progress-bar-wrap" id="rt-progress-wrap">
+            <div class="progress-bar-fill" id="rt-progress-bar"></div>
+          </div>
+          <div class="log-box" id="rt-log"></div>
+          <button class="btn btn-success" id="btn-reentrenar" onclick="reentrenarModelo()">
+            <span id="rt-icon">🚀</span> Reentrenar modelo
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════ VIEW: CÁMARAS ══════════════ -->
+    <section class="view" id="view-camaras">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">📷 Gestión de Cámaras</div>
+          <div class="page-subtitle">Añade nuevas cámaras desde el catálogo oficial de la DGT a la base de datos del sistema.</div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="loadCamarasDisponibles()">↻ Recargar catálogo</button>
+      </div>
+
+      <!-- Añadir manualmente por ID -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">➕ Añadir cámara por ID</span>
+        </div>
+        <div class="panel-body">
+          <div class="cam-search-row">
+            <div class="field-group">
+              <label class="field-label" for="cam-id-input">ID de cámara DGT</label>
+              <input class="field-input" id="cam-id-input" type="number" placeholder="Ej: 1234"
+                     onkeydown="if(event.key==='Enter')addCamara()" />
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="cam-desc-input">Descripción (opcional)</label>
+              <input class="field-input" id="cam-desc-input" type="text" placeholder="Ej: A-6 sentido La Coruña" />
+            </div>
+            <button class="btn btn-primary" onclick="addCamara()" id="btn-add-cam" style="white-space:nowrap">
+              ➕ Añadir cámara
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Catálogo DGT -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">🗃️ Catálogo de cámaras DGT</span>
+          <span id="cam-catalog-label" style="font-size:12px;color:var(--text-muted)">Cargando…</span>
+        </div>
+        <div class="panel-body" style="padding-bottom:0">
+          <div class="cam-search-row" style="margin-bottom:16px">
+            <div class="field-group">
+              <label class="field-label" for="cam-filter">Filtrar por ID o carretera</label>
+              <input class="field-input" id="cam-filter" type="text" placeholder="Ej: A-1 ó 598" oninput="filterCatalog()" />
+            </div>
+          </div>
+          <div class="cam-list" id="cam-list">
+            <div class="empty-state" style="grid-column:1/-1">
+              <div class="es-icon">⏳</div>
+              <div class="es-text">Cargando catálogo…</div>
+            </div>
+          </div>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// GLOBALS
+// ════════════════════════════════════════════════════════
+let currentPage  = 1;
+const PAGE_LIMIT = 50;
+let totalLogs    = 0;
+let allCatalog   = [];   // camaras disponibles DGT
+let activeCamIds = new Set();
+
+// ════════════════════════════════════════════════════════
+// CLOCK
+// ════════════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' }) +
+    '  ' + now.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════
+async function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.getElementById('nav-'  + name).classList.add('active');
+
+  if (name === 'logs')    loadLogs();
+  if (name === 'camaras') { 
+    await loadCamarasActivas();
+    await loadCamarasDisponibles();
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════════
+function toast(msg, type = 'success', duration = 4000) {
+  const icons = { success: '✅', error: '❌', warn: '⚠️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type] || '💬'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), duration);
+}
+
+// ════════════════════════════════════════════════════════
+// LOGS
+// ════════════════════════════════════════════════════════
+async function loadLogs() {
+  const btn = document.getElementById('btn-refresh-logs');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Cargando…';
+
+  try {
+    const r = await fetch(`/api/logs_predicciones?page=${currentPage}&limit=${PAGE_LIMIT}`);
+    const data = await r.json();
+
+    if (!data.success) throw new Error(data.error || 'Error desconocido');
+
+    totalLogs = data.total;
+    renderLogsTable(data.logs);
+    updateKPIs(data.logs, data.total);
+    updatePagination();
+
+  } catch(e) {
+    document.getElementById('logs-tbody').innerHTML =
+      `<tr><td colspan="8"><div class="empty-state"><div class="es-icon">❌</div><div class="es-text">${e.message}</div></div></td></tr>`;
+    toast('Error cargando logs: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻ Actualizar';
+  }
+}
+
+function renderLogsTable(logs) {
+  const tbody = document.getElementById('logs-tbody');
+
+  if (!logs.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+      <div class="es-icon">📭</div>
+      <div class="es-text">Aún no hay predicciones registradas.</div>
+    </div></td></tr>`;
+    document.getElementById('logs-count-label').textContent = '0 registros';
+    return;
+  }
+
+  document.getElementById('logs-count-label').textContent =
+    `Mostrando ${logs.length} de ${totalLogs} registros`;
+
+  tbody.innerHTML = logs.map(l => `
+    <tr>
+      <td><span style="color:var(--text-muted);font-size:11px">#${l.id}</span></td>
+      <td><strong>${l.usuario || '—'}</strong></td>
+      <td>${l.carretera}</td>
+      <td>${l.pk}</td>
+      <td style="font-size:12px">${l.fecha_hora_prediccion}</td>
+      <td>
+        <span class="badge" style="border-color:${l.color}20;background:${l.color}18;color:${l.color}">
+          ${nivelEmoji(l.nivel)} ${l.descripcion}
+        </span>
+      </td>
+      <td style="color:var(--text-muted)">${l.usuario}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${l.fecha_calculo}</td>
+    </tr>
+  `).join('');
+}
+
+function nivelEmoji(n) {
+  return ['😴','🚗','🚦','🚨'][n] ?? '❓';
+}
+
+function updateKPIs(logs, total) {
+  document.getElementById('kpi-total').textContent  = total;
+  document.getElementById('kpi-fluido').textContent = logs.filter(l => l.nivel === 0).length;
+  document.getElementById('kpi-denso').textContent  = logs.filter(l => l.nivel === 1).length;
+  document.getElementById('kpi-atasco').textContent = logs.filter(l => l.nivel >= 2).length;
+}
+
+function updatePagination() {
+  const totalPages = Math.max(1, Math.ceil(totalLogs / PAGE_LIMIT));
+  document.getElementById('page-info').textContent = `Pág. ${currentPage} / ${totalPages}`;
+  document.getElementById('btn-prev').disabled = currentPage <= 1;
+  document.getElementById('btn-next').disabled = currentPage >= totalPages;
+}
+
+function changePage(delta) {
+  currentPage = Math.max(1, currentPage + delta);
+  loadLogs();
+}
+
+// ════════════════════════════════════════════════════════
+// DESCARGAR DATASET
+// ════════════════════════════════════════════════════════
+async function descargarDataset() {
+  const btn       = document.getElementById('btn-descargar');
+  const progress  = document.getElementById('dl-progress-wrap');
+  const bar       = document.getElementById('dl-progress-bar');
+  const logBox    = document.getElementById('dl-log');
+  const icon      = document.getElementById('dl-icon');
+
+  btn.disabled = true;
+  icon.innerHTML = '<span class="spin"></span>';
+  progress.classList.add('visible');
+  logBox.classList.add('visible');
+  logBox.innerHTML = '';
+
+  addLog(logBox, '▶ Iniciando descarga de imágenes…', 'ok');
+
+  // Simula progreso visual mientras espera la respuesta
+  let pct = 0;
+  const ticker = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 4, 90);
+    bar.style.width = pct + '%';
+  }, 400);
+
+  try {
+    const r = await fetch('/descargar_dataset', { method: 'POST' });
+    const d = await r.json();
+
+    clearInterval(ticker);
+    bar.style.width = '100%';
+
+    if (d.success) {
+      addLog(logBox, '✅ ' + (d.message || 'Dataset actualizado correctamente.'), 'ok');
+      toast('Imágenes descargadas y dataset actualizado ✅', 'success');
+    } else {
+      addLog(logBox, '❌ Error: ' + (d.error || 'Fallo desconocido'), 'err');
+      toast('Error en la descarga: ' + d.error, 'error');
+    }
+  } catch(e) {
+    clearInterval(ticker);
+    addLog(logBox, '❌ No se pudo conectar con el servidor: ' + e.message, 'err');
+    toast('Error de conexión', 'error');
+  } finally {
+    btn.disabled = false;
+    icon.textContent = '📥';
+    setTimeout(() => { progress.classList.remove('visible'); bar.style.width = '0%'; }, 2500);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// REENTRENAR MODELO
+// ════════════════════════════════════════════════════════
+async function reentrenarModelo() {
+  const btn      = document.getElementById('btn-reentrenar');
+  const progress = document.getElementById('rt-progress-wrap');
+  const bar      = document.getElementById('rt-progress-bar');
+  const logBox   = document.getElementById('rt-log');
+  const icon     = document.getElementById('rt-icon');
+
+  btn.disabled = true;
+  icon.innerHTML = '<span class="spin"></span>';
+  progress.classList.add('visible');
+  logBox.classList.add('visible');
+  logBox.innerHTML = '';
+
+  addLog(logBox, '▶ Cargando dataset normalizado…', 'ok');
+
+  let pct = 0;
+  const ticker = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 3, 88);
+    bar.style.width = pct + '%';
+    if (pct > 20 && pct < 22) addLog(logBox, '⚙️  Preparando features…', 'ok');
+    if (pct > 50 && pct < 52) addLog(logBox, '🧠 Entrenando modelo XGBoost…', 'ok');
+    if (pct > 80 && pct < 82) addLog(logBox, '💾 Guardando xgboost_model.json…', 'ok');
+  }, 500);
+
+  try {
+    const r = await fetch('/reentrenar', { method: 'POST' });
+    const d = await r.json();
+
+    clearInterval(ticker);
+    bar.style.width = '100%';
+
+    if (d.success) {
+      addLog(logBox, '✅ ' + (d.message || 'Modelo reentrenado y guardado.'), 'ok');
+      toast('Modelo reentrenado con éxito 🚀', 'success');
+    } else {
+      addLog(logBox, '❌ Error: ' + (d.error || 'Fallo desconocido'), 'err');
+      toast('Error al reentrenar: ' + d.error, 'error');
+    }
+  } catch(e) {
+    clearInterval(ticker);
+    addLog(logBox, '❌ Sin conexión: ' + e.message, 'err');
+    toast('Error de conexión', 'error');
+  } finally {
+    btn.disabled = false;
+    icon.textContent = '🚀';
+    setTimeout(() => { progress.classList.remove('visible'); bar.style.width = '0%'; }, 2500);
+  }
+}
+
+function addLog(box, msg, type = 'ok') {
+  const line = document.createElement('div');
+  line.className = 'log-line' + (type === 'err' ? ' err' : type === 'warn' ? ' warn' : '');
+  line.textContent = `[${new Date().toLocaleTimeString('es-ES')}]  ${msg}`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ════════════════════════════════════════════════════════
+// CÁMARAS — Activas
+// ════════════════════════════════════════════════════════
+async function loadCamarasActivas() {
+  activeCamIds = new Set();
+  try {
+    const r = await fetch('/api/camaras_activas');
+    const d = await r.json();
+    if (d.ids) d.ids.forEach(id => activeCamIds.add(String(id)));
+  } catch(e) {
+    console.warn('No se pudieron cargar cámaras activas:', e);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// CÁMARAS — Catálogo DGT
+// ════════════════════════════════════════════════════════
+async function loadCamarasDisponibles() {
+  const list  = document.getElementById('cam-list');
+  const label = document.getElementById('cam-catalog-label');
+  list.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="es-icon">⏳</div><div class="es-text">Cargando catálogo DGT…</div></div>`;
+
+  try {
+    const r = await fetch('/api/camaras_disponibles');
+    const d = await r.json();
+
+    if (!d.success) throw new Error(d.error || 'error');
+
+    allCatalog = d.camaras || [];
+    label.textContent = `${allCatalog.length} cámaras en catálogo DGT`;
+    const noActivas = allCatalog.filter(c => !activeCamIds.has(String(c.id)));
+    renderCatalog(noActivas);
+  } catch(e) {
+    list.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="es-icon">❌</div><div class="es-text">Error cargando catálogo: ${e.message}</div></div>`;
+    toast('No se pudo cargar el catálogo DGT', 'error');
+  }
+}
+
+function renderCatalog(cameras) {
+  const list = document.getElementById('cam-list');
+
+  if (!cameras.length) {
+    list.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="es-icon">📭</div><div class="es-text">No hay cámaras disponibles.</div></div>`;
+    return;
+  }
+
+  list.innerHTML = cameras.slice(0, 200).map(c => {
+    const isActive = activeCamIds.has(String(c.id));
+    return `
+      <div class="cam-item ${isActive ? 'active' : ''}">
+        <div class="cam-item-id">📷 ID ${c.id}</div>
+        <div class="cam-item-road">🛣️ ${c.carretera || '—'}  PK ${c.pk || '—'}</div>
+        <div class="cam-item-status ${isActive ? 'on' : 'off'}">
+          ${isActive ? '● En sistema' : '○ No añadida'}
+        </div>
+        ${!isActive
+          ? `<button class="btn btn-primary btn-sm" onclick="addCamaraById(${c.id})">➕ Añadir</button>`
+          : `<button class="btn btn-outline btn-sm" disabled>✔ Activa</button>`
+        }
+      </div>`;
+  }).join('');
+}
+
+function filterCatalog() {
+  const q = document.getElementById('cam-filter').value.toLowerCase();
+  const base = allCatalog.filter(c => !activeCamIds.has(String(c.id)));
+  if (!q) { 
+    renderCatalog(base); 
+    return; 
+  }
+  const filtered = base.filter(c =>
+    !q || String(c.id).includes(q) || (c.carretera || '').toLowerCase().includes(q)
+  );
+  renderCatalog(filtered);
+}
+
+// ════════════════════════════════════════════════════════
+// CÁMARAS — Añadir
+// ════════════════════════════════════════════════════════
+async function addCamara() {
+  const id   = document.getElementById('cam-id-input').value.trim();
+  const desc = document.getElementById('cam-desc-input').value.trim();
+  if (!id) { toast('Introduce un ID de cámara', 'warn'); return; }
+  await addCamaraById(id, desc);
+  document.getElementById('cam-id-input').value   = '';
+  document.getElementById('cam-desc-input').value = '';
+}
+
+async function addCamaraById(id, desc = '') {
+  const btn = document.getElementById('btn-add-cam');
+  if (btn) btn.disabled = true;
+
+  try {
+    const r = await fetch('/api/add_camara', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ id: String(id), descripcion: desc })
+    });
+    const d = await r.json();
+
+    if (d.success) {
+      toast(`Cámara ${id} añadida al sistema ✅`, 'success');
+      activeCamIds.add(String(id));
+      renderCatalog(allCatalog.filter(c => {
+        const q = document.getElementById('cam-filter').value.toLowerCase();
+        return !q || String(c.id).includes(q) || (c.carretera || '').toLowerCase().includes(q);
+      }));
+    } else {
+      toast('Error: ' + (d.error || 'No se pudo añadir'), 'error');
+    }
+  } catch(e) {
+    toast('Error de conexión: ' + e.message, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// LOGOUT
+// ════════════════════════════════════════════════════════
+function logout() {
+  fetch('/api/logout', { method: 'POST' })
+    .catch(() => {})
+    .finally(() => { window.location.href = '/'; });
+}
+
+// ════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════
+loadLogs();
+</script>
+</body>
+</html>

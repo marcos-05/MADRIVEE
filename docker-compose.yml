@@ -1,0 +1,37 @@
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MADRIVEE_DB_ROOT_PASSWORD:?Define MADRIVEE_DB_ROOT_PASSWORD en .env}
+      MYSQL_DATABASE: pc2
+      MYSQL_USER: madrive
+      MYSQL_PASSWORD: ${MADRIVEE_DB_PASSWORD:?Define MADRIVEE_DB_PASSWORD en .env}
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - madrive_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    environment:
+      MADRIVEE_DB_HOST: db
+      MADRIVEE_DB_USER: madrive
+      MADRIVEE_DB_PASSWORD: ${MADRIVEE_DB_PASSWORD:?Define MADRIVEE_DB_PASSWORD en .env}
+      MADRIVEE_DB_NAME: pc2
+      MADRIVEE_DB_PORT: "3306"
+      MADRIVEE_SECRET_KEY: ${MADRIVEE_SECRET_KEY:?Define MADRIVEE_SECRET_KEY en .env}
+      MADRIVEE_HOST: 0.0.0.0
+    ports:
+      - "127.0.0.1:5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  madrive_db_data:

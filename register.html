@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MaDrive · Crear cuenta</title>
+    <meta name="description" content="Crea tu cuenta en el Sistema de Análisis de Tráfico MaDrive — Comunidad de Madrid" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --blue-dark: #0d1f3c;
+            --blue-mid: #1a3a5c;
+            --blue-brand: #1565c0;
+            --blue-light: #1e5799;
+            --blue-accent: #2196f3;
+            --green-cam: #22cc44;
+            --white: #ffffff;
+            --glass-bg: rgba(13, 31, 60, 0.72);
+            --glass-border: rgba(33, 150, 243, 0.30);
+            --input-bg: rgba(255, 255, 255, 0.07);
+            --input-border: rgba(33, 150, 243, 0.40);
+            --text-muted: rgba(200, 225, 255, 0.65);
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+
+        /* ─── BACKGROUND ─────────────────────────────── */
+        .bg {
+            position: fixed;
+            inset: 0;
+            background: url('img/login_bg.png') center/cover no-repeat;
+            filter: brightness(0.45) saturate(1.3);
+            transform: scale(1.05);
+            z-index: 0;
+        }
+
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 50%, rgba(21, 101, 192, 0.18) 0%, transparent 70%),
+                linear-gradient(175deg, rgba(13, 31, 60, 0.85) 0%, rgba(26, 58, 92, 0.60) 50%, rgba(13, 31, 60, 0.90) 100%);
+            z-index: 1;
+        }
+
+        .nodes-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .node {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--green-cam);
+            box-shadow: 0 0 14px 4px rgba(34, 204, 68, 0.55);
+            animation: pulse-node 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-node {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.35); }
+        }
+
+        .connector {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(33, 150, 243, 0.6), transparent);
+            transform-origin: 0 50%;
+            animation: flow 4s linear infinite;
+        }
+
+        @keyframes flow {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* ─── LAYOUT ──────────────────────────────────── */
+        .page {
+            position: relative;
+            z-index: 10;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        /* ─── REGISTER CARD ──────────────────────────── */
+        .card {
+            background: var(--glass-bg);
+            border: 1.5px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 44px 40px 40px;
+            backdrop-filter: blur(28px) saturate(1.4);
+            -webkit-backdrop-filter: blur(28px) saturate(1.4);
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+                0 32px 80px rgba(0, 20, 60, 0.65),
+                0 0 60px rgba(21, 101, 192, 0.18);
+            animation: card-enter 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+            animation-delay: 0.1s;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        @keyframes card-enter {
+            from { opacity: 0; transform: translateY(30px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .card::before {
+            content: '';
+            display: block;
+            height: 3px;
+            background: linear-gradient(90deg, var(--blue-brand), var(--blue-accent), var(--green-cam));
+            border-radius: 3px;
+            margin-bottom: 32px;
+        }
+
+        /* Brand logo */
+        .card-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--blue-brand), var(--blue-accent));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 6px 20px rgba(21, 101, 192, 0.50);
+        }
+
+        .brand-name {
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--white);
+            letter-spacing: 3px;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .card-header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: 0.5px;
+        }
+
+        .card-header p {
+            margin-top: 6px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ─── FORM ────────────────────────────────────── */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(200, 225, 255, 0.80);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper .icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 13px 14px 13px 44px;
+            background: var(--input-bg);
+            border: 1.5px solid var(--input-border);
+            border-radius: 10px;
+            color: var(--white);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+        }
+
+        .input-wrapper input::placeholder {
+            color: rgba(180, 210, 255, 0.35);
+        }
+
+        .input-wrapper input:focus {
+            border-color: var(--blue-accent);
+            background: rgba(33, 150, 243, 0.10);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.18);
+        }
+
+        .input-wrapper input.invalid {
+            border-color: #ef5350;
+            box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.18);
+        }
+
+        .input-wrapper .toggle-pw {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 15px;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .input-wrapper .toggle-pw:hover {
+            color: var(--blue-accent);
+        }
+
+        /* Password strength bar */
+        .pw-strength {
+            margin-top: 8px;
+            height: 4px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .pw-strength-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: 4px;
+            transition: width 0.35s, background 0.35s;
+        }
+
+        .pw-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* ─── BUTTON ──────────────────────────────────── */
+        .btn-register {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--blue-brand) 0%, var(--blue-accent) 100%);
+            color: var(--white);
+            font-size: 15px;
+            font-weight: 700;
+            font-family: inherit;
+            letter-spacing: 0.5px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.15s, box-shadow 0.25s;
+            box-shadow: 0 6px 22px rgba(21, 101, 192, 0.50);
+            margin-top: 8px;
+        }
+
+        .btn-register::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 32px rgba(21, 101, 192, 0.65);
+        }
+
+        .btn-register:hover::before { opacity: 1; }
+        .btn-register:active { transform: translateY(0); }
+
+        .btn-register.loading .btn-text { display: none; }
+
+        .btn-register .btn-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(255, 255, 255, 0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            margin: 0 auto;
+            animation: spin 0.7s linear infinite;
+        }
+
+        .btn-register.loading .btn-spinner { display: block; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── ALERTS ─────────────────────────── */
+        .alert {
+            display: none;
+            padding: 11px 14px;
+            border-radius: 9px;
+            font-size: 13px;
+            margin-bottom: 18px;
+            border-left: 3px solid;
+            animation: fade-in 0.3s ease;
+        }
+
+        .alert.error {
+            background: rgba(211, 47, 47, 0.15);
+            border-color: #ef5350;
+            color: #ff8a80;
+        }
+
+        .alert.success {
+            background: rgba(34, 204, 68, 0.12);
+            border-color: var(--green-cam);
+            color: #69f0ae;
+        }
+
+        .alert.show {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ─── DIVIDER ─────────────────────────────────── */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 22px 0 18px;
+            color: rgba(150, 185, 230, 0.4);
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(33, 150, 243, 0.20);
+        }
+
+        /* ─── FOOTER ──────────────────────────────────── */
+        .card-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: rgba(150, 185, 230, 0.55);
+        }
+
+        .card-footer a {
+            color: var(--blue-accent);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .card-footer a:hover {
+            color: #64b5f6;
+            text-decoration: underline;
+        }
+
+        /* ─── RESPONSIVE ──────────────────────────────── */
+        @media (max-width: 600px) {
+            .card { padding: 32px 24px 28px; }
+        }
+
+        @media (max-height: 700px) {
+            html, body { overflow: auto; }
+            .page { height: auto; min-height: 100vh; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Background -->
+    <div class="bg"></div>
+    <div class="bg-overlay"></div>
+
+    <!-- Decorative floating nodes -->
+    <div class="nodes-canvas" id="nodesCanvas"></div>
+
+    <!-- Main layout -->
+    <div class="page">
+
+        <div class="card" role="main">
+
+            <!-- Brand -->
+            <div class="card-brand">
+                <div class="brand-icon">🚦</div>
+                <div class="brand-name">MaDrive</div>
+            </div>
+
+            <div class="card-header">
+                <h1>Crear cuenta</h1>
+                <p>Regístrate en el sistema de monitorización</p>
+            </div>
+
+            <!-- Alert area -->
+            <div class="alert error" id="alertError" role="alert">
+                <span>⚠️</span>
+                <span id="alertErrorMsg">Error al crear la cuenta.</span>
+            </div>
+            <div class="alert success" id="alertSuccess" role="alert">
+                <span>✅</span>
+                <span>Cuenta creada. Redirigiendo al inicio de sesión…</span>
+            </div>
+
+            <form id="registerForm" novalidate>
+
+                <div class="form-group">
+                    <label for="username">Nombre de usuario</label>
+                    <div class="input-wrapper">
+                        <span class="icon">👤</span>
+                        <input type="text" id="username" name="username" placeholder="mi_usuario"
+                            autocomplete="username" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Correo electrónico</label>
+                    <div class="input-wrapper">
+                        <span class="icon">✉️</span>
+                        <input type="email" id="email" name="email" placeholder="usuario@madrive.es"
+                            autocomplete="email" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <div class="input-wrapper">
+                        <span class="icon">🔒</span>
+                        <input type="password" id="password" name="password" placeholder="••••••••"
+                            autocomplete="new-password" required />
+                        <button type="button" class="toggle-pw" id="togglePw"
+                            aria-label="Mostrar contraseña">👁️</button>
+                    </div>
+                    <div class="pw-strength">
+                        <div class="pw-strength-bar" id="strengthBar"></div>
+                    </div>
+                    <p class="pw-hint" id="strengthHint">Mínimo 6 caracteres</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirmar contraseña</label>
+                    <div class="input-wrapper">
+                        <span class="icon">🔐</span>
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••"
+                            autocomplete="new-password" required />
+                        <button type="button" class="toggle-pw" id="toggleConfirmPw"
+                            aria-label="Mostrar contraseña">👁️</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-register" id="btnRegister">
+                    <span class="btn-text">🚀 &nbsp;Crear mi cuenta</span>
+                    <div class="btn-spinner"></div>
+                </button>
+
+            </form>
+
+            <div class="divider">¿YA TIENES CUENTA?</div>
+
+            <div class="card-footer">
+                <a href="/">Inicia sesión aquí</a>
+            </div>
+
+        </div>
+
+    </div><!-- /page -->
+
+    <script>
+        // ─── Decorative floating nodes ───────────────────
+        (function () {
+            const canvas = document.getElementById('nodesCanvas');
+            const nodes = [
+                { x: 12, y: 22 }, { x: 28, y: 55 }, { x: 18, y: 78 },
+                { x: 42, y: 15 }, { x: 58, y: 40 }, { x: 72, y: 20 },
+                { x: 85, y: 65 }, { x: 65, y: 85 }, { x: 35, y: 90 },
+                { x: 90, y: 35 }, { x: 78, y: 48 }, { x: 50, y: 72 },
+            ];
+            nodes.forEach((n, i) => {
+                const el = document.createElement('div');
+                el.className = 'node';
+                const size = 6 + Math.random() * 6;
+                el.style.cssText = `
+                    left:${n.x}%;top:${n.y}%;
+                    width:${size}px;height:${size}px;
+                    animation-delay:${(i * 0.4).toFixed(1)}s;
+                    animation-duration:${2.5 + Math.random() * 2}s;
+                `;
+                canvas.appendChild(el);
+
+                if (i < nodes.length - 1) {
+                    const n2 = nodes[i + 1];
+                    const dx = n2.x - n.x;
+                    const dy = n2.y - n.y;
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    const line = document.createElement('div');
+                    line.className = 'connector';
+                    line.style.cssText = `
+                        left:${n.x}%;top:${n.y}%;
+                        width:${len * 1.0}%;
+                        transform:rotate(${angle}deg);
+                        animation-delay:${(i * 0.6).toFixed(1)}s;
+                        animation-duration:${3 + Math.random() * 2}s;
+                    `;
+                    canvas.appendChild(line);
+                }
+            });
+        })();
+
+        // ─── Toggle password visibility ───────────────────
+        function setupToggle(btnId, inputId) {
+            document.getElementById(btnId).addEventListener('click', () => {
+                const inp = document.getElementById(inputId);
+                const isHidden = inp.type === 'password';
+                inp.type = isHidden ? 'text' : 'password';
+                document.getElementById(btnId).textContent = isHidden ? '🙈' : '👁️';
+            });
+        }
+        setupToggle('togglePw', 'password');
+        setupToggle('toggleConfirmPw', 'confirmPassword');
+
+        // ─── Password strength ────────────────────────────
+        const pwInput = document.getElementById('password');
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthHint = document.getElementById('strengthHint');
+
+        pwInput.addEventListener('input', () => {
+            const val = pwInput.value;
+            let score = 0;
+            if (val.length >= 6) score++;
+            if (val.length >= 10) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+
+            const pct = (score / 5) * 100;
+            let color, label;
+            if (score <= 1) { color = '#ef5350'; label = 'Muy débil'; }
+            else if (score === 2) { color = '#ffc107'; label = 'Débil'; }
+            else if (score === 3) { color = '#2196f3'; label = 'Aceptable'; }
+            else if (score === 4) { color = '#22cc44'; label = 'Fuerte'; }
+            else { color = '#00e676'; label = 'Muy fuerte 💪'; }
+
+            strengthBar.style.width = pct + '%';
+            strengthBar.style.background = color;
+            strengthHint.textContent = val.length === 0 ? 'Mínimo 6 caracteres' : label;
+            strengthHint.style.color = val.length === 0 ? 'var(--text-muted)' : color;
+        });
+
+        // ─── Form submit ──────────────────────────────────
+        document.getElementById('registerForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            hideAlerts();
+
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Client-side validation
+            if (!username || !email || !password || !confirmPassword) {
+                showAlert('error', 'Por favor, completa todos los campos.');
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('error', 'La contraseña debe tener al menos 6 caracteres.');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showAlert('error', 'Las contraseñas no coinciden.');
+                document.getElementById('confirmPassword').classList.add('invalid');
+                return;
+            }
+
+            document.getElementById('confirmPassword').classList.remove('invalid');
+
+            const btn = document.getElementById('btnRegister');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await res.json();
+
+                btn.classList.remove('loading');
+                btn.disabled = false;
+
+                if (res.ok && data.success) {
+                    showAlert('success');
+                    await delay(1800);
+                    window.location.href = '/';
+                } else {
+                    showAlert('error', data.message || 'Error al crear la cuenta.');
+                }
+
+            } catch (err) {
+                console.error(err);
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                showAlert('error', 'Error de conexión con el servidor.');
+            }
+        });
+
+        function showAlert(type, msg) {
+            if (type === 'error') {
+                const el = document.getElementById('alertError');
+                document.getElementById('alertErrorMsg').textContent = msg;
+                el.classList.add('show');
+            } else {
+                document.getElementById('alertSuccess').classList.add('show');
+            }
+        }
+
+        function hideAlerts() {
+            document.getElementById('alertError').classList.remove('show');
+            document.getElementById('alertSuccess').classList.remove('show');
+        }
+
+        function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+    </script>
+
+</body>
+
+</html>

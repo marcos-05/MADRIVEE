@@ -1,0 +1,14 @@
+.env
+.venv/
+.history/
+.vscode/
+__pycache__/
+*.py[cod]
+*.db
+*.sqlite*
+*.pt
+*.jpg
+*.jpeg
+*.png
+*.mp4
+tmp/

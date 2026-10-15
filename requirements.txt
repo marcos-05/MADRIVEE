@@ -1,0 +1,13 @@
+numpy
+pandas
+requests
+tqdm
+scikit-learn
+ultralytics
+torch
+xgboost
+flask
+uvicorn
+pymysql
+mysql-connector-python
+
