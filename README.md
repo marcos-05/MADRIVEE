@@ -32,7 +32,9 @@ Los cuatro niveles que muestra la aplicación son **fluido**, **denso**, **atasc
 | Archivos `.html` | Inicio de sesión, registro, mapa y vistas de usuario/administración. |
 | [`docker-compose.yml`](docker-compose.yml) | Arranque local de API y MariaDB. |
 
-La copia **no incluye** la base de datos de usuarios, contraseñas reales, imágenes descargadas, vídeos de demostración, archivos compilados ni el peso YOLO `yolov8x-seg.pt` (aprox. 144 MB). El fichero SQL contiene solo la estructura y metadatos de cámaras públicas. Las claves de la API y de MariaDB se configuran mediante variables de entorno; no hay valores de producción en el repositorio.
+**El proyecto principal sí está incluido:** la web, la API, los scripts de análisis y entrenamiento, los conjuntos de datos y el modelo XGBoost ya entrenado con sus archivos de preprocesamiento. `init.sql` permite crear de nuevo la base de datos vacía con las ubicaciones de las cámaras.
+
+Se han omitido las cuentas y contraseñas de usuarios reales, las imágenes descargadas y los vídeos de demostración. Tampoco se incluye `yolov8x-seg.pt`: es un peso preentrenado de YOLO de unos 144 MB, necesario para analizar imágenes. Ultralytics intenta descargarlo cuando se usa esa función por primera vez; para ejecutarla sin conexión hay que obtener el peso por separado. La contraseña de MariaDB y la clave de sesión de Flask se definen en un archivo `.env` local que no se publica.
 
 ## Probarlo en local
 
