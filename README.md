@@ -1,10 +1,10 @@
 # MADRIVEE · Análisis de congestión en Madrid
 
-**Proyecto universitario desarrollado en equipo.** Esta es mi copia personal para mostrar el trabajo completo y explicar con claridad mi aportación. El [repositorio grupal original](https://github.com/RickVicente/Proyecto-de-Computaci-n-I) permanece independiente.
+**Proyecto universitario desarrollado en equipo.** Este repositorio es una copia personal del trabajo grupal. El [repositorio original](https://github.com/RickVicente/Proyecto-de-Computaci-n-I) permanece independiente.
 
 MADRIVEE utiliza imágenes de cámaras públicas de la DGT para estimar el nivel de tráfico y mostrarlo en un mapa. El sistema también permite consultar una predicción para una cámara y una fecha/hora, y guardar un historial de esas consultas.
 
-> **English summary:** Team project that combines public traffic-camera data, computer vision and a congestion classifier with a Flask API, MariaDB and a web map. My work focused on the database, backend API and integration of the application.
+> **English summary:** University team project that combines public traffic-camera data, computer vision and a congestion classifier with a Flask API, MariaDB and a web map.
 
 ## Cómo funciona
 
@@ -20,14 +20,6 @@ flowchart LR
 ```
 
 Los cuatro niveles que muestra la aplicación son **fluido**, **denso**, **atasco** y **muy congestionado**. YOLO analiza las imágenes; XGBoost utiliza los datos preparados para clasificar la congestión. La API conecta esos módulos con la base de datos y la interfaz.
-
-## Mi aportación
-
-- Diseño e implementación de la base de datos para usuarios, zonas/cámaras e historial de predicciones.
-- Desarrollo e integración de la API Flask: acceso a datos, registro e inicio de sesión, consulta de cámaras, predicciones y registros.
-- Integración del backend con las vistas y resolución de conflictos de integración durante el trabajo en equipo.
-
-**Créditos del equipo:** el desarrollo de los modelos de visión y clasificación correspondió principalmente a Ricardo. El mapa y las vistas fueron un trabajo compartido por otros integrantes; esta copia conserva el código del proyecto para que se entienda la solución completa. Los nombres y el historial de contribuciones pueden consultarse en el [repositorio grupal](https://github.com/RickVicente/Proyecto-de-Computaci-n-I). No presento el entrenamiento de YOLO o XGBoost como una contribución individual mía.
 
 ## Contenido del repositorio
 
